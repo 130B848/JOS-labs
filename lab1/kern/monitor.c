@@ -61,7 +61,7 @@ mon_kerninfo(int argc, char **argv, struct Trapframe *tf)
 static uint32_t
 read_pretaddr() {
     uint32_t pretaddr;
-    __asm __volatile("leal 4(%%ebp), %0" : "=r" (pretaddr)); 
+    __asm __volatile("leal 4(%%ebp), %0" : "=r" (pretaddr));
     return pretaddr;
 }
 
@@ -81,7 +81,7 @@ start_overflow(void)
     // And you must use the "cprintf" function with %n specifier
     // you augmented in the "Exercise 9" to do this job.
 
-    // hint: You can use the read_pretaddr function to retrieve 
+    // hint: You can use the read_pretaddr function to retrieve
     //       the pointer to the function call return address;
 
     char str[256] = {};
@@ -89,8 +89,7 @@ start_overflow(void)
     char *pret_addr;
 
 	// Your code here.
-    
-
+    // pret_addr = read_pretaddr();
 
 }
 
@@ -100,10 +99,24 @@ overflow_me(void)
         start_overflow();
 }
 
+#define EBP_OFFSET(ebp, offset) (*((uint32_t *)(ebp) + (offset)))
 int
 mon_backtrace(int argc, char **argv, struct Trapframe *tf)
 {
 	// Your code here.
+		uint32_t ebp = read_ebp();
+		uint32_t eip = read_eip();
+
+		cprintf("Stack backtrace:\n");
+		while(ebp != 0x0) {
+			eip = EBP_OFFSET(ebp, 1);
+			cprintf("  eip %08x  ebp %08x  args %08x %08x %08x %08x %08x\n",
+					eip, ebp, EBP_OFFSET(ebp, 2), EBP_OFFSET(ebp, 3), EBP_OFFSET(ebp, 4),
+					EBP_OFFSET(ebp, 5), EBP_OFFSET(ebp, 6));
+			// warning: the value of ebp to print is register value, not stack value
+			ebp = EBP_OFFSET(ebp, 0);
+		}
+
     overflow_me();
     cprintf("Backtrace success\n");
 	return 0;
