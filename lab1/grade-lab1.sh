@@ -34,9 +34,9 @@ score=0
 	else
 		echo WRONG $time
 	fi
-    
+
     if grep "error! writing through NULL pointer! (%n argument)" jos.out >/dev/null && grep "warning! The value %n argument pointed to has been overflowed!" jos.out > /dev/null && grep "chnum1: 29 chnum2: 30" jos.out > /dev/null && grep "chnum1: -1" jos.out > /dev/null
-    then 
+    then
         score=`expr 10 + $score`
         echo OK $time
     else

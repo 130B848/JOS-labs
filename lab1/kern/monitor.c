@@ -13,6 +13,7 @@
 
 #define CMDBUF_SIZE	80	// enough for one VGA text line
 
+int mon_time(int argc, char **argv, struct Trapframe *tf);
 
 struct Command {
 	const char *name;
@@ -24,12 +25,47 @@ struct Command {
 static struct Command commands[] = {
 	{ "help", "Display this list of commands", mon_help },
 	{ "kerninfo", "Display information about the kernel", mon_kerninfo },
+	{ "backtrace", "Display backtrace about the Functions", mon_backtrace},
+	{ "time", "Record a command's runtime. Usage: time [command]", mon_time}
 };
 #define NCOMMANDS (sizeof(commands)/sizeof(commands[0]))
 
 unsigned read_eip();
 
 /***** Implementations of basic kernel monitor commands *****/
+inline uint64_t
+rdtsc()
+{
+	uint32_t low, high;
+	__asm __volatile("rdtsc" : "=a"(low), "=d"(high));
+	return (((uint64_t)high << 32) | low);
+}
+
+int
+mon_time(int argc, char **argv, struct Trapframe *tf)
+{
+	if (argc == 1) {
+		cprintf("Usage: time [command]\n");
+		return 0;
+	}
+
+	int i;
+	for (i = 0; i < NCOMMANDS && strcmp(argv[1], commands[i].name); i++)
+		;
+
+	if (i == NCOMMANDS) {
+		cprintf("Unknown command: %s\n", argv[1]);
+		return 0;
+	}
+
+	uint64_t start = rdtsc();
+	commands[i].func(argc - 1, argv + 1, tf);
+	uint64_t end = rdtsc();
+
+	cprintf("%s cycles: %llu\n", argv[1], end - start);
+
+	return 0;
+}
 
 int
 mon_help(int argc, char **argv, struct Trapframe *tf)
@@ -88,9 +124,15 @@ start_overflow(void)
     int nstr = 0;
     char *pret_addr;
 
-	// Your code here.
-    // pret_addr = read_pretaddr();
+		// Your code here.
+		pret_addr = (char*)read_pretaddr();
 
+		void (*overflow)(void) = do_overflow;
+		uint32_t ret_addr = (uint32_t)overflow + 0x3; // pass push ebp + mov esp, ebp
+		uint32_t ret_byte_0 = ret_addr & 0xff;
+		uint32_t ret_byte_1 = (ret_addr >> 8) & 0xff;
+		uint32_t ret_byte_2 = (ret_addr >> 16) & 0xff;
+		uint32_t ret_byte_3 = (ret_addr >> 24) & 0xff;
 }
 
 void
@@ -104,8 +146,7 @@ int
 mon_backtrace(int argc, char **argv, struct Trapframe *tf)
 {
 	// Your code here.
-		uint32_t ebp = read_ebp();
-		uint32_t eip = read_eip();
+		uint32_t ebp = read_ebp(), eip;
 
 		cprintf("Stack backtrace:\n");
 		while(ebp != 0x0) {
@@ -113,6 +154,16 @@ mon_backtrace(int argc, char **argv, struct Trapframe *tf)
 			cprintf("  eip %08x  ebp %08x  args %08x %08x %08x %08x %08x\n",
 					eip, ebp, EBP_OFFSET(ebp, 2), EBP_OFFSET(ebp, 3), EBP_OFFSET(ebp, 4),
 					EBP_OFFSET(ebp, 5), EBP_OFFSET(ebp, 6));
+			// debug info
+			struct Eipdebuginfo info;
+			if (!debuginfo_eip(eip, &info)) {
+				char func_name[info.eip_fn_namelen + 1];
+				func_name[info.eip_fn_namelen] = '\0';
+				if (strncpy(func_name, info.eip_fn_name, info.eip_fn_namelen)) {
+					cprintf("\t%s:%d: %s+%x\n\n", info.eip_file, info.eip_line,
+							func_name, eip - info.eip_fn_addr);
+				}
+			}
 			// warning: the value of ebp to print is register value, not stack value
 			ebp = EBP_OFFSET(ebp, 0);
 		}
