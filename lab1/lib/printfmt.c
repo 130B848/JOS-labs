@@ -295,7 +295,7 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 							cprintf("%s", null_error);
 						} else if ((*(char *)putdat) & 0x80) {
 							cprintf("%s", overflow_error);
-							*tmp = 0xff;	// due to the grade.sh, this should return -1
+							*tmp = *(char *)putdat;
 						} else {
 							*tmp = *(char *)putdat;
 						}

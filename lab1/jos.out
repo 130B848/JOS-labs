@@ -14,30 +14,38 @@ entering test_backtrace 2
 entering test_backtrace 1
 entering test_backtrace 0
 Stack backtrace:
-  eip f010007b  ebp f010fdf8  args 00000000 00000000 00000000 0000001a f0100aff
+  eip f010007b  ebp f0110df8  args 00000000 00000000 00000000 0000001a f0100c10
 	     kern/init.c:107: test_backtrace+3b
 
-  eip f0100068  ebp f010fe18  args 00000000 00000001 f010fe58 0000001a f0100aff
+  eip f0100068  ebp f0110e18  args 00000000 00000001 f0110e58 0000001a f0100c10
 	     kern/init.c:106: test_backtrace+28
 
-  eip f0100068  ebp f010fe38  args 00000001 00000002 f010fe78 0000001a f0100aff
+  eip f0100068  ebp f0110e38  args 00000001 00000002 f0110e78 0000001a f0100c10
 	     kern/init.c:106: test_backtrace+28
 
-  eip f0100068  ebp f010fe58  args 00000002 00000003 f010fe98 0000001a f0100aff
+  eip f0100068  ebp f0110e58  args 00000002 00000003 f0110e98 0000001a f0100c10
 	     kern/init.c:106: test_backtrace+28
 
-  eip f0100068  ebp f010fe78  args 00000003 00000004 f010fea8 0000001f f0101ed0
+  eip f0100068  ebp f0110e78  args 00000003 00000004 f0110ea8 0000001f f0101ff0
 	     kern/init.c:106: test_backtrace+28
 
-  eip f0100068  ebp f010fe98  args 00000004 00000005 f010fff8 f010fede f010ffdf
+  eip f0100068  ebp f0110e98  args 00000004 00000005 f0110ff8 f0110ede f0110fdf
 	     kern/init.c:106: test_backtrace+28
 
-  eip f010018d  ebp f010feb8  args 00000005 00000400 fffffc00 00000000 00000000
+  eip f010018d  ebp f0110eb8  args 00000005 00000400 fffffc00 00000000 00000000
 	     kern/init.c:124: i386_init+f9
 
-  eip f010003e  ebp f010fff8  args 00111021 00000000 00000000 00000000 00000000
+  eip f010003e  ebp f0110ff8  args 00112021 00000000 00000000 00000000 00000000
 	     kern/entry.S:14: <unknown>+0
 
+
+
+
+
+warning! The value %n argument pointed to has been overflowed!
+
+0xf0110dac
+Overflow success
 Backtrace success
 leaving test_backtrace 0
 leaving test_backtrace 1
