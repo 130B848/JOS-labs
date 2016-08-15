@@ -11,10 +11,14 @@
 #include <kern/monitor.h>
 #include <kern/kdebug.h>
 #include <kern/trap.h>
+#include <kern/env.h>
 
 #define CMDBUF_SIZE	80	// enough for one VGA text line
 
 int mon_time(int argc, char **argv, struct Trapframe *tf);
+int mon_debug_continue(int argc, char **argv, struct Trapframe *tf);
+int mon_debug_step(int argc, char **argv, struct Trapframe *tf);
+int mon_debug_display(int argc, char **argv, struct Trapframe *tf);
 
 struct Command {
 	const char *name;
@@ -27,13 +31,56 @@ static struct Command commands[] = {
 	{ "help", "Display this list of commands", mon_help },
 	{ "kerninfo", "Display information about the kernel", mon_kerninfo },
 	{ "backtrace", "Display backtrace about the Functions", mon_backtrace},
-	{ "time", "Record a command's runtime. Usage: time [command]", mon_time}
+	{ "time", "Record a command's runtime. Usage: time [command]", mon_time},
+	{ "c", "Continue", mon_debug_continue},
+	{ "si", "Execute next step", mon_debug_step},
+	{ "x", "Display memory information", mon_debug_display}
 };
 #define NCOMMANDS (sizeof(commands)/sizeof(commands[0]))
 
 unsigned read_eip();
 
 /***** Implementations of basic kernel monitor commands *****/
+int
+mon_debug_display(int argc, char **argv, struct Trapframe *tf)
+{
+	if (argc != 2) {
+		cprintf("Usage: x [address]");
+		return 1;
+	}
+
+	int result = *(int *)(strtol(argv[1], NULL, 16));
+	cprintf("%d\n", result);
+	return 0;
+}
+
+int
+mon_debug_step(int argc, char **argv, struct Trapframe *tf)
+{
+	if (tf == NULL) {
+		cprintf("Trapframe is NULL.\n");
+		return 1;
+	}
+
+	tf->tf_eflags |= FL_TF;
+	cprintf("tf_eip=0x%x\n", tf->tf_eip);
+	env_run(curenv);
+	return 0;
+}
+
+int
+mon_debug_continue(int argc, char **argv, struct Trapframe *tf)
+{
+	if (tf == NULL) {
+		cprintf("Trapframe is NULL.\n");
+		return 1;
+	}
+
+	tf->tf_eflags &= ~FL_TF;
+	env_run(curenv);
+	return 0;
+}
+
 uint64_t
 rdtsc()
 {
@@ -93,14 +140,37 @@ mon_kerninfo(int argc, char **argv, struct Trapframe *tf)
 	return 0;
 }
 
+#define EBP_OFFSET(ebp, offset) (*((uint32_t *)(ebp) + (offset)))
+
 int
 mon_backtrace(int argc, char **argv, struct Trapframe *tf)
 {
 	// Your code here.
+	uint32_t ebp = read_ebp(), eip;
+
+	cprintf("Stack backtrace:\n");
+	while(ebp != 0x0) {
+		eip = EBP_OFFSET(ebp, 1);
+		cprintf("  eip %08x  ebp %08x  args %08x %08x %08x %08x %08x\n",
+		eip, ebp, EBP_OFFSET(ebp, 2), EBP_OFFSET(ebp, 3), EBP_OFFSET(ebp, 4),
+		EBP_OFFSET(ebp, 5), EBP_OFFSET(ebp, 6));
+		// debug info
+		struct Eipdebuginfo info;
+		if (!debuginfo_eip(eip, &info)) {
+			char func_name[info.eip_fn_namelen + 1];
+			func_name[info.eip_fn_namelen] = '\0';
+			if (strncpy(func_name, info.eip_fn_name, info.eip_fn_namelen)) {
+				cprintf("\t%s:%d: %s+%x\n\n", info.eip_file, info.eip_line,
+				func_name, eip - info.eip_fn_addr);
+			}
+		}
+		// warning: the value of ebp to print is register value, not stack value
+		ebp = EBP_OFFSET(ebp, 0);
+	}
+
+	cprintf("Backtrace success\n");
 	return 0;
 }
-
-
 
 /***** Kernel monitor command interpreter *****/
 

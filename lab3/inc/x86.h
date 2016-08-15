@@ -35,6 +35,14 @@ static __inline uint32_t read_esp(void) __attribute__((always_inline));
 static __inline void cpuid(uint32_t info, uint32_t *eaxp, uint32_t *ebxp, uint32_t *ecxp, uint32_t *edxp);
 static __inline uint64_t read_tsc(void) __attribute__((always_inline));
 
+#define wrmsr(msr_id, msr_v1, msr_v2) __asm__ __volatile__("wrmsr"::"c" (msr_id), "a" (msr_v1), "d" (msr_v2))
+
+// static __inline void
+// wrmsr(int msr_id, int msr_v1, int msr_v2)
+// {
+// 	__asm __volatile("wrmsr"::"c" (msr_id), "a" (msr_v1), "d" (msr_v2));
+// }
+
 static __inline void
 breakpoint(void)
 {
@@ -137,11 +145,11 @@ outl(int port, uint32_t data)
 	__asm __volatile("outl %0,%w1" : : "a" (data), "d" (port));
 }
 
-static __inline void 
+static __inline void
 invlpg(void *addr)
-{ 
+{
 	__asm __volatile("invlpg (%0)" : : "r" (addr) : "memory");
-}  
+}
 
 static __inline void
 lidt(void *p)
@@ -259,7 +267,7 @@ static __inline void
 cpuid(uint32_t info, uint32_t *eaxp, uint32_t *ebxp, uint32_t *ecxp, uint32_t *edxp)
 {
 	uint32_t eax, ebx, ecx, edx;
-	asm volatile("cpuid" 
+	asm volatile("cpuid"
 		: "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)
 		: "a" (info));
 	if (eaxp)

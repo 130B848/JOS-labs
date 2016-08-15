@@ -229,12 +229,15 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 	if (generation <= 0)	// Don't create a negative env_id.
 		generation = 1 << ENVGENSHIFT;
 	e->env_id = generation | (e - envs);
+	// cprintf("env_alloc env_id = %d\n", e->env_id);
 
 	// Set the basic status variables.
 	e->env_parent_id = parent_id;
 	e->env_type = ENV_TYPE_USER;
 	e->env_status = ENV_RUNNABLE;
 	e->env_runs = 0;
+
+	e->env_cur_brk = 0;
 
 	// Clear out all the saved register state,
 	// to prevent the register values
@@ -296,6 +299,7 @@ region_alloc(struct Env *e, void *va, size_t len)
 			}
 		}
 	}
+	e->env_cur_brk = start;
 }
 
 //

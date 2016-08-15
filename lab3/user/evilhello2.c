@@ -33,6 +33,19 @@ sgdt(struct Pseudodesc* gdtd)
 	__asm __volatile("sgdt %0" :  "=m" (*gdtd));
 }
 
+char vaddr[PGSIZE];
+struct Segdesc backup;
+struct Segdesc *gdt;
+struct Segdesc *entry;
+
+void warpper()
+{
+	evil();
+	*entry = backup;
+	__asm __volatile("popl %ebp\r\n"	\
+								"lret\r\n");
+}
+
 // Invoke a given function pointer with ring0 privilege, then return to ring3
 void ring0_call(void (*fun_ptr)(void)) {
     // Here's some hints on how to achieve this.
@@ -45,10 +58,28 @@ void ring0_call(void (*fun_ptr)(void)) {
     // 7. Leave ring0 (lret instruction)
 
     // Hint : use a wrapper function to call fun_ptr. Feel free
-    //        to add any functions or global variables in this 
+    //        to add any functions or global variables in this
     //        file if necessary.
 
     // Lab3 : Your Code Here
+		struct Pseudodesc gdtd;
+		sgdt(&gdtd);
+
+		int err = sys_map_kernel_page((void *)gdtd.pd_base, (void *)vaddr);
+		if (err) {
+			cprintf("sys_map_kernel_page failed\n");
+		}
+
+		uint32_t base = (uint32_t)vaddr & ~0xFFF;
+		uint32_t offset = PGOFF(gdtd.pd_base);
+		uint32_t index = GD_UD >> 0x3;
+
+		gdt = (struct Segdesc *)(base + offset);
+		entry = gdt + index;
+		backup = *entry;
+
+		SETCALLGATE(*((struct Gatedesc *)entry), GD_KT, warpper, 3);
+		__asm __volatile("lcall $0x20, $0");
 }
 
 void
@@ -60,4 +91,3 @@ umain(int argc, char **argv)
 	// call the evil function in ring3
 	evil();
 }
-

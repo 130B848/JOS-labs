@@ -627,7 +627,6 @@ page_insert(pde_t *pgdir, struct Page *pp, void *va, int perm)
 {
 	// Fill this function in
 	pte_t *pte = pgdir_walk(pgdir, va, 1);
-	struct Page* page;
 
 	if (pte && (*pte & PTE_P)) {
 		if (page2pa(pp) == PTE_ADDR(*pte)) {
@@ -735,6 +734,24 @@ int
 user_mem_check(struct Env *env, const void *va, size_t len, int perm)
 {
 	// LAB 3: Your code here.
+	size_t start = (size_t)ROUNDDOWN(va, PGSIZE);
+	size_t end = (size_t)ROUNDUP(va + len, PGSIZE);
+
+	size_t i;
+	int auth = perm | PTE_P;
+	pte_t *pte;
+
+	for (i = start; i < end; i += PGSIZE) {
+		if (i >= ULIM) {
+			user_mem_check_addr = (i == start) ? (uintptr_t)va : i;
+			return -E_FAULT;
+		}
+		pte = pgdir_walk(env->env_pgdir, (void *)i, 0);
+		if (!(pte && (*pte & auth) == auth)) {
+			user_mem_check_addr = (i == start) ? (uintptr_t)va : i;
+			return -E_FAULT;
+		}
+	}
 
 	return 0;
 }

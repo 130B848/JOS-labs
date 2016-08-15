@@ -85,10 +85,6 @@ trap_init(void)
 	extern struct Segdesc gdt[];
 
 	// LAB 3: Your code here.
-	// struct Gatedesc idt[256] = { { 0 } };
-	// struct Pseudodesc idt_pd = {
-	// 	sizeof(idt) - 1, (uint32_t) idt
-	// };
 	SETGATE(idt[T_DIVIDE], 1, GD_KT, _divide_error, 0);
 	SETGATE(idt[T_DEBUG], 1, GD_KT, _debug, 0);
 	SETGATE(idt[T_NMI], 1, GD_KT, _non_maskable_interrupt, 0);
@@ -109,6 +105,11 @@ trap_init(void)
 	SETGATE(idt[T_ALIGN], 1, GD_KT, _alignment_check, 0);
 	SETGATE(idt[T_MCHK], 1, GD_KT, _machine_check, 0);
 	SETGATE(idt[T_SIMDERR], 1, GD_KT, _simd_fp_exception, 0);
+
+	extern void sysenter_handler();
+	wrmsr(0x174, GD_KT, 0);
+	wrmsr(0x175, KSTACKTOP, 0);
+	wrmsr(0x176, sysenter_handler, 0);
 
 	// Per-CPU setup
 	trap_init_percpu();
@@ -187,6 +188,20 @@ trap_dispatch(struct Trapframe *tf)
 {
 	// Handle processor exceptions.
 	// LAB 3: Your code here.
+	if (tf->tf_trapno == T_PGFLT) {
+		page_fault_handler(tf);
+	}
+	switch (tf->tf_trapno) {
+		case T_PGFLT:
+			page_fault_handler(tf);
+			break;
+		case T_DEBUG:
+		case T_BRKPT:
+			monitor(tf);
+			break;
+		default:
+			break;
+	}
 
 	// Unexpected trap: The user process or the kernel has a bug.
 	print_trapframe(tf);
@@ -247,6 +262,9 @@ page_fault_handler(struct Trapframe *tf)
 	// Handle kernel-mode page faults.
 
 	// LAB 3: Your code here.
+	if (!(tf->tf_cs & 0x03)) {
+		panic("Kernek mode page fault.\n");
+	}
 
 	// We've already handled kernel-mode exceptions, so if we get here,
 	// the page fault happened in user mode.

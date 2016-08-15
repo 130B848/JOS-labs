@@ -75,7 +75,37 @@ sysenter_handler:
 /*
  * Lab 3: Your code here for system call handling
  */
+   pushl $GD_UD
+   pushl %ebp
+   pushfl
+   pushl $GD_UT
+   pushl %esi
+   pushl $0
+ 	 pushl $0
 
+   pushw $0    # uint16_t tf_padding2
+   pushw %ds
+   pushw $0    # uint16_t tf_padding1
+   pushw %es
+   pushal
+
+   movw $GD_KD, %ax
+   movw %ax, %ds
+   movw %ax, %es
+   pushl %esp
+
+   call syscall_helper
+
+   popl %esp
+   popal
+   popw %cx  # eliminate padding
+   popw %es
+   popw %cx  # eliminate padding
+   popw %ds
+
+   movl %ebp, %ecx
+   movl %esi, %edx
+   sysexit
 
 /*
  * Lab 3: Your code here for _alltraps
@@ -90,7 +120,6 @@ sysenter_handler:
   movl $GD_KD, %eax
 	movw %ax, %ds
 	movw %ax, %es
-
 	pushl %esp
 
 	call trap

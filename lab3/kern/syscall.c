@@ -21,6 +21,7 @@ sys_cputs(const char *s, size_t len)
 	// Destroy the environment if not.
 
 	// LAB 3: Your code here.
+	user_mem_assert(curenv, (void*)s, len, 0);
 
 	// Print the string supplied by the user.
 	cprintf("%.*s", len, s);
@@ -67,17 +68,39 @@ sys_map_kernel_page(void* kpage, void* va)
 {
 	int r;
 	struct Page* p = pa2page(PADDR(kpage));
-	if(p ==NULL)
+	if(p == NULL)
 		return E_INVAL;
 	r = page_insert(curenv->env_pgdir, p, va, PTE_U | PTE_W);
 	return r;
+}
+
+static void
+region_alloc(struct Env *e, void *va, size_t len)
+{
+	size_t start = (size_t)ROUNDDOWN(va, PGSIZE);
+	size_t end = (size_t)ROUNDUP(va + len, PGSIZE);
+	size_t i;
+	struct Page *tmp;
+
+	for (i = start; i < end; i += PGSIZE) {
+		if (!(tmp = page_alloc(0))) {
+			panic("Execute region_alloc(...) failed. Out of memory.\n");
+		} else {
+			if (page_insert(e->env_pgdir, tmp, (void *)i, PTE_W | PTE_U)) {
+				panic("page_insert in region_alloc failed. Cannot insert page.\n");
+			}
+		}
+	}
+	e->env_cur_brk = start;
 }
 
 static int
 sys_sbrk(uint32_t inc)
 {
 	// LAB3: your code sbrk here...
-	return 0;
+	region_alloc(curenv, (void *)(curenv->env_cur_brk + inc), inc);
+	// cprintf("sbrk %x inc %x\n", curenv->env_cur_brk, inc);
+	return curenv->env_cur_brk;
 }
 
 // Dispatches to the correct kernel function, passing the arguments.
@@ -87,7 +110,29 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 	// Call the function corresponding to the 'syscallno' parameter.
 	// Return any appropriate return value.
 	// LAB 3: Your code here.
-
-	panic("syscall not implemented");
+	switch (syscallno) {
+		case SYS_cputs:
+			sys_cputs((const char *) a1, a2);
+			return 0;
+		case SYS_cgetc:
+			return sys_cgetc();
+		case SYS_getenvid:
+			return sys_getenvid();
+		case SYS_env_destroy:
+			return sys_env_destroy(a1);
+		case SYS_map_kernel_page:
+			return sys_map_kernel_page((void *)a1, (void *)a2);
+		case SYS_sbrk:
+			return sys_sbrk(a1);
+		default:
+			return -E_INVAL;
+	}
+	// panic("syscall not implemented");
 }
 
+void
+syscall_helper(struct Trapframe *tf)
+{
+	curenv->env_tf = *tf;
+	tf->tf_regs.reg_eax = syscall(tf->tf_regs.reg_eax, tf->tf_regs.reg_edx, tf->tf_regs.reg_ecx, tf->tf_regs.reg_ebx, tf->tf_regs.reg_edi, 0);
+}
