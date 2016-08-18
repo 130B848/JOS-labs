@@ -421,6 +421,7 @@ env_create(uint8_t *binary, size_t size, enum EnvType type)
 	} else {
 		load_icode(env, binary, size);
 		env->env_type = type;
+		// cprintf("env_create  env_id = %d env_type = %d\n", env->env_id, env->env_type);
 	}
 }
 
@@ -560,6 +561,7 @@ env_run(struct Env *e)
 		curenv->env_runs++;
 		lcr3(PADDR(curenv->env_pgdir));
 	}
+	// cprintf("env_run curenv->env_id = %d\n", curenv->env_id);
 
 	unlock_kernel();
 	env_pop_tf(&curenv->env_tf);

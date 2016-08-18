@@ -234,24 +234,6 @@ run-%-nox: .gdbinit
 	$(V)$(MAKE) --no-print-directory prep-$*
 	$(QEMU) -nographic $(QEMUOPTS)
 
-# For test runs
-prep-%:
-	$(V)rm -f $(OBJDIR)/kern/init.o $(IMAGES)
-	$(V)$(MAKE) "DEFS=-DTEST=$$(case $* in *_*) echo $*;; *) echo user_$*;; esac)" $(IMAGES)
-	$(V)rm -f $(OBJDIR)/kern/init.o
-
-run-%-nox-gdb: .gdbinit
-	$(V)$(MAKE) --no-print-directory prep-$*
-	$(QEMU) -nographic $(QEMUOPTS) -S
-
-run-%-gdb: .gdbinit
-	$(V)$(MAKE) --no-print-directory prep-$*
-	$(QEMU) $(QEMUOPTS) -S $(QEMUGDB)
-
-run-%-nox: .gdbinit
-	$(V)$(MAKE) --no-print-directory prep-$*
-	$(QEMU) -nographic $(QEMUOPTS)
-
 run-%: .gdbinit
 	$(V)$(MAKE) --no-print-directory prep-$*
 	$(QEMU) $(QEMUOPTS)

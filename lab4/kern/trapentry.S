@@ -76,10 +76,10 @@ sysenter_handler:
 /*
  * Lab 3: Your code here for system call handling
  */
-   pushl $GD_UD
+   pushl $GD_UD | 3
    pushl %ebp
    pushfl
-   pushl $GD_UT
+   pushl $GD_UT | 3
    pushl %esi
    pushl $0
  	 pushl $0

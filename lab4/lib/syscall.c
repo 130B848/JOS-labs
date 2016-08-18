@@ -39,7 +39,7 @@ syscall(int num, int check, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 
 
 	if(check && ret > 0)
-	panic("syscall %d returned %d (> 0)", num, ret);
+		panic("syscall %d returned %d (> 0)", num, ret);
 
 	return ret;
 }
@@ -89,7 +89,15 @@ sys_page_alloc(envid_t envid, void *va, int perm)
 int
 sys_page_map(envid_t srcenv, void *srcva, envid_t dstenv, void *dstva, int perm)
 {
-	return syscall(SYS_page_map, 1, srcenv, (uint32_t) srcva, dstenv, (uint32_t) dstva, perm);
+	// cprintf("sys_page_map gets here\n");
+	// return syscall(SYS_page_map, 1, srcenv, (uint32_t) srcva, dstenv, (uint32_t) dstva, perm);
+	uint32_t args[5];
+	args[0] = (uint32_t) srcenv;
+	args[1] = (uint32_t) srcva;
+	args[2] = (uint32_t) dstenv;
+	args[3] = (uint32_t) dstva;
+	args[4] = (uint32_t) perm;
+	return syscall(SYS_page_map, 1, (uint32_t)args, 0, 0, 0, 0);
 }
 
 int

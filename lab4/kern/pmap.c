@@ -253,6 +253,8 @@ mem_init(void)
 //   - Map the per-CPU stacks in the region [KSTACKTOP-PTSIZE, KSTACKTOP)
 // See the revised inc/memlayout.h
 //
+#define KSTACKTOP_I(i) (KSTACKTOP - (i) * (KSTKSIZE + KSTKGAP) - KSTKSIZE)
+
 static void
 mem_init_mp(void)
 {
@@ -276,11 +278,9 @@ mem_init_mp(void)
 	//     Permissions: kernel RW, user NONE
 	//
 	// LAB 4: Your code here:
-	uint32_t i;
-	uint32_t per_stack_top = KSTACKTOP - KSTKSIZE;
+	size_t i;
 	for (i = 0; i < NCPU; i++) {
-		boot_map_region(kern_pgdir, per_stack_top, KSTKSIZE, PADDR(percpu_kstacks[i]), PTE_P | PTE_W);
-		per_stack_top -= (KSTKSIZE + KSTKGAP);
+		boot_map_region(kern_pgdir, KSTACKTOP_I(i), KSTKSIZE, PADDR(percpu_kstacks[i]), PTE_W);
 	}
 }
 

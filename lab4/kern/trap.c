@@ -112,6 +112,7 @@ trap_init(void)
 	SETGATE(idt[T_ALIGN], 1, GD_KT, _alignment_check, 0);
 	SETGATE(idt[T_MCHK], 1, GD_KT, _machine_check, 0);
 	SETGATE(idt[T_SIMDERR], 1, GD_KT, _simd_fp_exception, 0);
+	// SETGATE(idt[T_SYSCALL], 1, GD_KT, syscall, 3);
 
 	extern void sysenter_handler();
 	wrmsr(0x174, GD_KT, 0);
@@ -223,10 +224,10 @@ trap_dispatch(struct Trapframe *tf)
 {
 	// Handle processor exceptions.
 	// LAB 3: Your code here.
-	if (tf->tf_trapno == T_PGFLT) {
-		page_fault_handler(tf);
-	}
 	switch (tf->tf_trapno) {
+		// case T_SYSCALL:
+		// 	syscall_helper(tf);
+		// 	break;
 		case T_PGFLT:
 			page_fault_handler(tf);
 			break;
@@ -283,8 +284,8 @@ trap(struct Trapframe *tf)
 		// Acquire the big kernel lock before doing any
 		// serious kernel work.
 		// LAB 4: Your code here.
-		lock_kernel();
 		assert(curenv);
+		lock_kernel();
 
 		// Garbage collect if current enviroment is a zombie
 		if (curenv->env_status == ENV_DYING) {
@@ -329,8 +330,8 @@ page_fault_handler(struct Trapframe *tf)
 	// Handle kernel-mode page faults.
 
 	// LAB 3: Your code here.
-	if (!(tf->tf_cs & 0x03)) {
-		panic("Kernek mode page fault.\n");
+	if (!(tf->tf_cs & 0x3)) {
+		panic("Kernel mode page fault.\n");
 	}
 
 	// We've already handled kernel-mode exceptions, so if we get here,

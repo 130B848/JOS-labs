@@ -26,11 +26,12 @@ void spinlock_test()
 
 	/* BSP give APs some time to reach this point */
 	if (cpunum() == 0) {
-		while (interval++ < 10000)
+		while (interval++ < 10000) {
 			asm volatile("pause");
+		}
 	}
 
-	for (i=0; i<100; i++) {
+	for (i = 0; i < 100; i++) {
 		lock_kernel();
 		if (test_ctr % 10000 != 0)
 			panic("ticket spinlock test fail: I saw a middle value\n");
@@ -39,6 +40,7 @@ void spinlock_test()
 			test_ctr++;
 		unlock_kernel();
 	}
+
 	lock_kernel();
 	cprintf("spinlock_test() succeeded on CPU %d!\n", cpunum());
 	unlock_kernel();
@@ -83,10 +85,10 @@ i386_init(void)
 
 #ifdef USE_TICKET_SPIN_LOCK
 	unlock_kernel();
-	spinlock_test();
+	// spinlock_test();
 	lock_kernel();
 #endif
-
+	// cprintf("spinlock_test() exited on CPU %d!\n", cpunum());
 	// Should always have idle processes at first.
 	int i;
 	for (i = 0; i < NCPU; i++)
@@ -97,7 +99,9 @@ i386_init(void)
 	ENV_CREATE(TEST, ENV_TYPE_USER);
 #else
 	// Touch all you want.
-	ENV_CREATE(user_primes, ENV_TYPE_USER);
+	ENV_CREATE(user_dumbfork, ENV_TYPE_USER);
+	// for (i = 0; i < 3; i++)
+	// 	ENV_CREATE(user_yield, ENV_TYPE_USER);
 #endif // TEST*
 
 	// Schedule and run the first user environment!
@@ -160,7 +164,7 @@ mp_main(void)
 	// Your code here:
 	lock_kernel();
 	sched_yield();
-	
+
 	// Remove this after you finish Exercise 4
 	//for (;;);
 }

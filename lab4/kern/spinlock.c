@@ -20,7 +20,7 @@ struct spinlock kernel_lock = {
 // reading the old value as well as doing the add operation.
 // If your gcc cannot support this function, report to TA.
 #ifdef USE_TICKET_SPIN_LOCK
-unsigned atomic_return_and_add(unsigned *addr, unsigned value)
+unsigned atomic_return_and_add(volatile unsigned *addr, unsigned value)
 {
 	return __sync_fetch_and_add(addr, value);
 }
@@ -101,8 +101,8 @@ spin_lock(struct spinlock *lk)
 	//LAB 4: Your code here
 	unsigned ticket = atomic_return_and_add(&(lk->next), 1);
 	while (ticket != lk->own)
-		;
-		
+		asm volatile ("pause");
+
 #endif
 
 	// Record info about lock acquisition for debugging.
