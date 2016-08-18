@@ -4,5 +4,5 @@
 * Aim at obtaining a deeper understanding of Operating System
 
 ## Course Website
-* [Course@SJTU](ipads.sjtu.edu.cn/courses/os)
+* [Course@SJTU](http://ipads.se.sjtu.edu.cn/courses/os)
 * [Course@MIT](https://pdos.csail.mit.edu/6.828)
