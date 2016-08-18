@@ -69,25 +69,29 @@ sys_exofork(void)
 	// );
 	// return ret;
 	envid_t ret;
-	//cprintf("in lib sys_exofork");
-	// Modify at Lab4 Exercise6
-	asm volatile("push $0x0\n\t"
-							"push $0x0\n\t"
-							"push $0x0\n\t"
-							"push $0x0\n\t"
-							"push $0x0\n\t"
-							
-							"movl %%esp, %%edx\n\t"
-							"movl %%ebp, %%ebx\n\t"
-							"movl %%esp, %%ebp\n\t"
-							"leal after_sysenter_label%=, %%esi\n\t"
-							"sysenter\n\t"
-							"after_sysenter_label%=:\n\t"
+	asm volatile("pushl %%ecx\n\t"
+							"pushl %%edx\n\t"
+							"pushl %%ebx\n\t"
+							"pushl %%esi\n\t"
+							"pushl %%edi\n\t"
+							"pushl %%ebp\n\t"
 
-							"movl %%ebx, %%ebp\n\t"
-							"add $0x14, %%esp\n\t"
+							"movl %%esp, %%ebp\n\t"
+							"leal label_%=, %%esi\n\t"
+							"sysenter\n\t"
+							"label_%=:\n\t"
+
+							"movl %%ebp, %%esp\n\t"
+							"popl %%ebp\n\t"
+							"popl %%edi\n\t"
+							"popl %%esi\n\t"
+							"popl %%ebx\n\t"
+							"popl %%edx\n\t"
+							"popl %%ecx\n\t"
+
 							: "=a" (ret)
-							: "a" (SYS_exofork)
+							: "a" (SYS_exofork),
+								"i" (T_SYSCALL)
 							: "cc", "memory");
 
 	if(ret == -E_NO_FREE_ENV || ret == -E_NO_MEM)

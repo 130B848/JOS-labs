@@ -84,9 +84,9 @@ i386_init(void)
 	boot_aps();
 
 #ifdef USE_TICKET_SPIN_LOCK
-	unlock_kernel();
+	// unlock_kernel();
 	// spinlock_test();
-	lock_kernel();
+	// lock_kernel();
 #endif
 	// cprintf("spinlock_test() exited on CPU %d!\n", cpunum());
 	// Should always have idle processes at first.

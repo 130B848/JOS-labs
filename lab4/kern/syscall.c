@@ -374,7 +374,6 @@ sys_sbrk(uint32_t inc)
 {
 	// LAB3: your code sbrk here...
 	region_alloc(curenv, (void *)(curenv->env_cur_brk + inc), inc);
-	// cprintf("sbrk %x inc %x\n", curenv->env_cur_brk, inc);
 	return curenv->env_cur_brk;
 }
 
@@ -385,7 +384,6 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 	// Call the function corresponding to the 'syscallno' parameter.
 	// Return any appropriate return value.
 	// LAB 3: Your code here.
-	// cprintf("syscallno = %d\n", syscallno);
 	int t;
 	switch (syscallno) {
 		case SYS_cputs:
@@ -421,13 +419,10 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 			// cprintf("SYS_page_alloc\n");
 			return sys_page_alloc((envid_t)a1, (void *)a2, (int)a3);
 		case SYS_page_map:
-			cprintf("SYS_page_map\n");
+			// cprintf("SYS_page_map\n");
 			return sys_page_map((envid_t)*((uint32_t *)a1), (void *)*((uint32_t *)a1 + 1),
 												(envid_t)*((uint32_t *)a1 + 2), (void *)*((uint32_t *)a1 + 3),
 												(int)*((uint32_t*)a1 + 4));
-			// return sys_page_map((envid_t)*((uint32_t *)a1), (void *)*((uint32_t *)a1 + 1),
-			// 									(envid_t)*((uint32_t *)a1 + 2), (void *)*((uint32_t *)a1 + 3),
-			// 									(int)*((uint32_t*)a1 + 4));
 		case SYS_page_unmap:
 			// cprintf("SYS_page_unmap\n");
 			return sys_page_unmap((envid_t)a1, (void*)a2);
@@ -442,7 +437,6 @@ syscall_helper(struct Trapframe *tf)
 {
 	lock_kernel();
 	curenv->env_tf = *tf;
-	// cprintf("tf->tf_regs.reg_eax = %d\n", tf->tf_regs.reg_eax);
 	tf->tf_regs.reg_eax = syscall(tf->tf_regs.reg_eax, tf->tf_regs.reg_edx, tf->tf_regs.reg_ecx, tf->tf_regs.reg_ebx, tf->tf_regs.reg_edi, 0);
 	unlock_kernel();
 }

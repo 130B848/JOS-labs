@@ -112,7 +112,7 @@ trap_init(void)
 	SETGATE(idt[T_ALIGN], 1, GD_KT, _alignment_check, 0);
 	SETGATE(idt[T_MCHK], 1, GD_KT, _machine_check, 0);
 	SETGATE(idt[T_SIMDERR], 1, GD_KT, _simd_fp_exception, 0);
-	// SETGATE(idt[T_SYSCALL], 1, GD_KT, syscall, 3);
+	SETGATE(idt[T_SYSCALL], 1, GD_KT, syscall, 3);
 
 	extern void sysenter_handler();
 	wrmsr(0x174, GD_KT, 0);
