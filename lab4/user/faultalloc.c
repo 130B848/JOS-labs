@@ -18,6 +18,7 @@ handler(struct UTrapframe *utf)
 void
 umain(int argc, char **argv)
 {
+	cprintf("set_pgfault_handler end in umain fault alloc\n");
 	set_pgfault_handler(handler);
 	cprintf("%s\n", (char*)0xDeadBeef);
 	cprintf("%s\n", (char*)0xCafeBffe);

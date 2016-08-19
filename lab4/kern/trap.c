@@ -92,27 +92,27 @@ trap_init(void)
 	extern struct Segdesc gdt[];
 
 	// LAB 3: Your code here.
-	SETGATE(idt[T_DIVIDE], 1, GD_KT, _divide_error, 0);
-	SETGATE(idt[T_DEBUG], 1, GD_KT, _debug, 0);
-	SETGATE(idt[T_NMI], 1, GD_KT, _non_maskable_interrupt, 0);
-	SETGATE(idt[T_BRKPT], 1, GD_KT, _breakpoint, 3);
-	SETGATE(idt[T_OFLOW], 1, GD_KT, _overflow, 0);
-	SETGATE(idt[T_BOUND], 1, GD_KT, _bound_range_exceeded, 0);
-	SETGATE(idt[T_ILLOP], 1, GD_KT, _invalid_opcode, 0);
-	SETGATE(idt[T_DEVICE], 1, GD_KT, _device_not_available, 0);
-	SETGATE(idt[T_DBLFLT], 1, GD_KT, _double_fault, 0);
+	SETGATE(idt[T_DIVIDE], 0, GD_KT, _divide_error, 0);
+	SETGATE(idt[T_DEBUG], 0, GD_KT, _debug, 0);
+	SETGATE(idt[T_NMI], 0, GD_KT, _non_maskable_interrupt, 0);
+	SETGATE(idt[T_BRKPT], 0, GD_KT, _breakpoint, 3);
+	SETGATE(idt[T_OFLOW], 0, GD_KT, _overflow, 0);
+	SETGATE(idt[T_BOUND], 0, GD_KT, _bound_range_exceeded, 0);
+	SETGATE(idt[T_ILLOP], 0, GD_KT, _invalid_opcode, 0);
+	SETGATE(idt[T_DEVICE], 0, GD_KT, _device_not_available, 0);
+	SETGATE(idt[T_DBLFLT], 0, GD_KT, _double_fault, 0);
 
-	SETGATE(idt[T_TSS], 1, GD_KT, _invalid_tss, 0);
-	SETGATE(idt[T_SEGNP], 1, GD_KT, _segment_not_present, 0);
-	SETGATE(idt[T_STACK], 1, GD_KT, _stack_fault, 0);
-	SETGATE(idt[T_GPFLT], 1, GD_KT, _general_protection, 0);
-	SETGATE(idt[T_PGFLT], 1, GD_KT, _page_fault, 0);
+	SETGATE(idt[T_TSS], 0, GD_KT, _invalid_tss, 0);
+	SETGATE(idt[T_SEGNP], 0, GD_KT, _segment_not_present, 0);
+	SETGATE(idt[T_STACK], 0, GD_KT, _stack_fault, 0);
+	SETGATE(idt[T_GPFLT], 0, GD_KT, _general_protection, 0);
+	SETGATE(idt[T_PGFLT], 0, GD_KT, _page_fault, 0);
 
-	SETGATE(idt[T_FPERR], 1, GD_KT, _x87_fpu_error, 0);
-	SETGATE(idt[T_ALIGN], 1, GD_KT, _alignment_check, 0);
-	SETGATE(idt[T_MCHK], 1, GD_KT, _machine_check, 0);
-	SETGATE(idt[T_SIMDERR], 1, GD_KT, _simd_fp_exception, 0);
-	SETGATE(idt[T_SYSCALL], 1, GD_KT, syscall, 3);
+	SETGATE(idt[T_FPERR], 0, GD_KT, _x87_fpu_error, 0);
+	SETGATE(idt[T_ALIGN], 0, GD_KT, _alignment_check, 0);
+	SETGATE(idt[T_MCHK], 0, GD_KT, _machine_check, 0);
+	SETGATE(idt[T_SIMDERR], 0, GD_KT, _simd_fp_exception, 0);
+	SETGATE(idt[T_SYSCALL], 0, GD_KT, syscall, 3);
 
 	extern void sysenter_handler();
 	wrmsr(0x174, GD_KT, 0);
@@ -366,10 +366,32 @@ page_fault_handler(struct Trapframe *tf)
 	//   (the 'tf' variable points at 'curenv->env_tf').
 
 	// LAB 4: Your code here.
+	// cprintf("curenv->env_pgfault_upcall: %x\n", curenv->env_pgfault_upcall);
+	struct UTrapframe *utf;
+	if (curenv->env_pgfault_upcall) {
+		if (curenv->env_tf.tf_esp >= UXSTACKTOP - PGSIZE &&
+			curenv->env_tf.tf_esp < UXSTACKTOP) {
+			utf = (struct UTrapframe *)
+						(curenv->env_tf.tf_esp - sizeof(struct UTrapframe) - 4);
+		} else {
+			utf = (struct UTrapframe *)(UXSTACKTOP - sizeof(struct UTrapframe));
+		}
+		user_mem_assert(curenv, (void *)utf, sizeof(struct UTrapframe), PTE_W);
+		utf->utf_fault_va = fault_va;
+		utf->utf_err = tf->tf_err;
+		utf->utf_regs = tf->tf_regs;
+		utf->utf_eip = tf->tf_eip;
+		utf->utf_eflags = tf->tf_eflags;
+		utf->utf_esp = tf->tf_esp;
 
-	// Destroy the environment that caused the fault.
-	cprintf("[%08x] user fault va %08x ip %08x\n",
-		curenv->env_id, fault_va, tf->tf_eip);
-	print_trapframe(tf);
-	env_destroy(curenv);
+		curenv->env_tf.tf_esp = (uint32_t)utf;
+		curenv->env_tf.tf_eip = (uint32_t)curenv->env_pgfault_upcall;
+		env_run(curenv);
+	} else {
+		// Destroy the environment that caused the fault.
+		cprintf("[%08x] user fault va %08x ip %08x\n",
+			curenv->env_id, fault_va, tf->tf_eip);
+		print_trapframe(tf);
+		env_destroy(curenv);
+	}
 }

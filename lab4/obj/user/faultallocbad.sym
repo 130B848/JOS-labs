@@ -1,7 +1,7 @@
 00200010 R __STAB_BEGIN__
-00202fc8 R __STAB_END__
-00202fc9 R __STABSTR_BEGIN__
-00204c17 R __STABSTR_END__
+002030dc R __STAB_END__
+002030dd R __STABSTR_BEGIN__
+00204d39 R __STABSTR_END__
 00800020 T _start
 0080002c t args_exist
 00800033 T handler
@@ -64,9 +64,10 @@
 00801195 T sys_sbrk
 008011bb t label_586
 008011c7 T set_pgfault_handler
-00801200 T __udivdi3
-00801330 T __umoddi3
-008017e0 r error_string
+0080121c T _pgfault_upcall
+00801250 T __udivdi3
+00801380 T __umoddi3
+00801820 r error_string
 00802000 D binaryname
 00802004 b num_of_space
 00802008 b judge_time_for_space

@@ -84,9 +84,9 @@ i386_init(void)
 	boot_aps();
 
 #ifdef USE_TICKET_SPIN_LOCK
-	// unlock_kernel();
-	// spinlock_test();
-	// lock_kernel();
+		// unlock_kernel();
+		// spinlock_test();
+		// lock_kernel();
 #endif
 	// cprintf("spinlock_test() exited on CPU %d!\n", cpunum());
 	// Should always have idle processes at first.
@@ -99,9 +99,9 @@ i386_init(void)
 	ENV_CREATE(TEST, ENV_TYPE_USER);
 #else
 	// Touch all you want.
-	ENV_CREATE(user_dumbfork, ENV_TYPE_USER);
-	// for (i = 0; i < 3; i++)
-	// 	ENV_CREATE(user_yield, ENV_TYPE_USER);
+		// ENV_CREATE(user_faultallocbad, ENV_TYPE_USER);
+	for (i = 0; i < 3; i++)
+		ENV_CREATE(user_forktree, ENV_TYPE_USER);
 #endif // TEST*
 
 	// Schedule and run the first user environment!

@@ -23,7 +23,7 @@ sys_cputs(const char *s, size_t len)
 	// Destroy the environment if not.
 
 	// LAB 3: Your code here.
-	user_mem_assert(curenv, (void*)s, len, 0);
+	user_mem_assert(curenv, (void *)s, len, 0);
 
 	// Print the string supplied by the user.
 	cprintf("%.*s", len, s);
@@ -151,7 +151,14 @@ static int
 sys_env_set_pgfault_upcall(envid_t envid, void *func)
 {
 	// LAB 4: Your code here.
-	panic("sys_env_set_pgfault_upcall not implemented");
+	struct Env *env;
+	if (envid2env(envid, &env, 1)) {
+		return -E_BAD_ENV;
+	}
+
+	env->env_pgfault_upcall = func;
+	return 0;
+	// panic("sys_env_set_pgfault_upcall not implemented");
 }
 
 // Allocate a page of memory and map it at 'va' with permission
@@ -202,7 +209,7 @@ sys_page_alloc(envid_t envid, void *va, int perm)
 		return -E_NO_MEM;
 	}
 
-	memset(page2kva(new_page), 0, PGSIZE);
+	// memset(page2kva(new_page), 0, PGSIZE);
 	return 0;
 	// panic("sys_page_alloc not implemented");
 }
@@ -420,12 +427,17 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 			return sys_page_alloc((envid_t)a1, (void *)a2, (int)a3);
 		case SYS_page_map:
 			// cprintf("SYS_page_map\n");
-			return sys_page_map((envid_t)*((uint32_t *)a1), (void *)*((uint32_t *)a1 + 1),
-												(envid_t)*((uint32_t *)a1 + 2), (void *)*((uint32_t *)a1 + 3),
-												(int)*((uint32_t*)a1 + 4));
+			return sys_page_map((envid_t)*((uint32_t *)a1),
+													(void *)*((uint32_t *)a1 + 1),
+													(envid_t)*((uint32_t *)a1 + 2),
+													(void *)*((uint32_t *)a1 + 3),
+													(int)*((uint32_t*)a1 + 4));
 		case SYS_page_unmap:
 			// cprintf("SYS_page_unmap\n");
-			return sys_page_unmap((envid_t)a1, (void*)a2);
+			return sys_page_unmap((envid_t)a1, (void *)a2);
+		case SYS_env_set_pgfault_upcall:
+			// cprintf("SYS_env_set_pgfault_upcall\n");
+			return sys_env_set_pgfault_upcall((envid_t)a1, (void *)a2);
 		default:
 			return -E_INVAL;
 	}
@@ -437,6 +449,7 @@ syscall_helper(struct Trapframe *tf)
 {
 	lock_kernel();
 	curenv->env_tf = *tf;
-	tf->tf_regs.reg_eax = syscall(tf->tf_regs.reg_eax, tf->tf_regs.reg_edx, tf->tf_regs.reg_ecx, tf->tf_regs.reg_ebx, tf->tf_regs.reg_edi, 0);
+	tf->tf_regs.reg_eax = syscall(tf->tf_regs.reg_eax, tf->tf_regs.reg_edx,
+				tf->tf_regs.reg_ecx, tf->tf_regs.reg_ebx, tf->tf_regs.reg_edi, 0);
 	unlock_kernel();
 }

@@ -1,7 +1,7 @@
 00200010 R __STAB_BEGIN__
-002032bc R __STAB_END__
-002032bd R __STABSTR_BEGIN__
-00204fef R __STABSTR_END__
+002033d0 R __STAB_END__
+002033d1 R __STABSTR_BEGIN__
+00205111 R __STABSTR_END__
 00800020 T _start
 0080002c t args_exist
 00800033 t check_regs
@@ -65,9 +65,10 @@
 00801671 T sys_sbrk
 00801697 t label_586
 008016a3 T set_pgfault_handler
-008016d0 T __udivdi3
-00801800 T __umoddi3
-00801d40 r error_string
+008016f8 T _pgfault_upcall
+00801720 T __udivdi3
+00801850 T __umoddi3
+00801da0 r error_string
 00802000 D binaryname
 00802020 b after
 00802060 b during
