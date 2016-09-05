@@ -2529,7 +2529,7 @@ syscall(int num, int check, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
   800e96:	50                   	push   %eax
   800e97:	6a 03                	push   $0x3
   800e99:	68 84 1b 80 00       	push   $0x801b84
-  800e9e:	6a 29                	push   $0x29
+  800e9e:	6a 30                	push   $0x30
   800ea0:	68 a1 1b 80 00       	push   $0x801ba1
   800ea5:	e8 4a 06 00 00       	call   8014f4 <_panic>
 
@@ -2742,7 +2742,7 @@ syscall(int num, int check, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
   800f7d:	50                   	push   %eax
   800f7e:	6a 05                	push   $0x5
   800f80:	68 84 1b 80 00       	push   $0x801b84
-  800f85:	6a 29                	push   $0x29
+  800f85:	6a 30                	push   $0x30
   800f87:	68 a1 1b 80 00       	push   $0x801ba1
   800f8c:	e8 63 05 00 00       	call   8014f4 <_panic>
 
@@ -2827,7 +2827,7 @@ syscall(int num, int check, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
   800fee:	50                   	push   %eax
   800fef:	6a 06                	push   $0x6
   800ff1:	68 84 1b 80 00       	push   $0x801b84
-  800ff6:	6a 29                	push   $0x29
+  800ff6:	6a 30                	push   $0x30
   800ff8:	68 a1 1b 80 00       	push   $0x801ba1
   800ffd:	e8 f2 04 00 00       	call   8014f4 <_panic>
 	args[1] = (uint32_t) srcva;
@@ -2893,7 +2893,7 @@ syscall(int num, int check, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
   80103f:	50                   	push   %eax
   801040:	6a 07                	push   $0x7
   801042:	68 84 1b 80 00       	push   $0x801b84
-  801047:	6a 29                	push   $0x29
+  801047:	6a 30                	push   $0x30
   801049:	68 a1 1b 80 00       	push   $0x801ba1
   80104e:	e8 a1 04 00 00       	call   8014f4 <_panic>
 
@@ -2961,7 +2961,7 @@ syscall(int num, int check, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
   801090:	50                   	push   %eax
   801091:	6a 09                	push   $0x9
   801093:	68 84 1b 80 00       	push   $0x801b84
-  801098:	6a 29                	push   $0x29
+  801098:	6a 30                	push   $0x30
   80109a:	68 a1 1b 80 00       	push   $0x801ba1
   80109f:	e8 50 04 00 00       	call   8014f4 <_panic>
 
@@ -3027,7 +3027,7 @@ syscall(int num, int check, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
   8010e1:	50                   	push   %eax
   8010e2:	6a 0a                	push   $0xa
   8010e4:	68 84 1b 80 00       	push   $0x801b84
-  8010e9:	6a 29                	push   $0x29
+  8010e9:	6a 30                	push   $0x30
   8010eb:	68 a1 1b 80 00       	push   $0x801ba1
   8010f0:	e8 ff 03 00 00       	call   8014f4 <_panic>
 
@@ -3142,7 +3142,7 @@ syscall(int num, int check, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
   801163:	50                   	push   %eax
   801164:	6a 0d                	push   $0xd
   801166:	68 84 1b 80 00       	push   $0x801b84
-  80116b:	6a 29                	push   $0x29
+  80116b:	6a 30                	push   $0x30
   80116d:	68 a1 1b 80 00       	push   $0x801ba1
   801172:	e8 7d 03 00 00       	call   8014f4 <_panic>
 

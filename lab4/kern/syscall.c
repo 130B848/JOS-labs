@@ -449,7 +449,9 @@ syscall_helper(struct Trapframe *tf)
 {
 	lock_kernel();
 	curenv->env_tf = *tf;
-	tf->tf_regs.reg_eax = syscall(tf->tf_regs.reg_eax, tf->tf_regs.reg_edx,
+	curenv->env_tf.tf_regs.reg_eax = syscall(tf->tf_regs.reg_eax, tf->tf_regs.reg_edx,
 				tf->tf_regs.reg_ecx, tf->tf_regs.reg_ebx, tf->tf_regs.reg_edi, 0);
+	curenv->env_tf.tf_eflags |= FL_IF;
 	unlock_kernel();
+	env_pop_tf(&curenv->env_tf);
 }

@@ -27,6 +27,13 @@ syscall(int num, int check, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 							"popl %%ebx\n\t"
 							"popl %%edx\n\t"
 							"popl %%ecx\n\t"
+							// "popl %%edi\n\t"
+							// "popl %%esi\n\t"
+							// "popl %%ebp\n\t"
+							// "popl %%esp\n\t"
+							// "popl %%ebx\n\t"
+							// "popl %%edx\n\t"
+							// "popl %%ecx\n\t"
 
 							: "=a" (ret)
 							: "a" (num),
