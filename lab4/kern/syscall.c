@@ -334,7 +334,40 @@ static int
 sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
 {
 	// LAB 4: Your code here.
-	panic("sys_ipc_try_send not implemented");
+	struct Env *receiver;
+	struct Page *page;
+	pte_t *pte;
+	int r;
+	if ((r = envid2env(envid, &receiver, 0))) {
+		return -E_BAD_ENV;
+	}
+	if (!receiver->env_ipc_recving || receiver->env_ipc_from) {
+		return -E_IPC_NOT_RECV;
+	}
+	receiver->env_ipc_perm = 0;
+	if (srcva < (void *)UTOP) {
+		if (((uint32_t)srcva & (PGSIZE - 1)) || perm & ~PTE_AVAIL) {
+			return -E_INVAL;
+		}
+		if (!(page = page_lookup(curenv->env_pgdir, srcva, &pte))) {
+			return -E_INVAL;
+		}
+		if ((perm & PTE_W) && !(*pte & PTE_W)) {
+			return -E_INVAL;
+		}
+		if ((r = page_insert(receiver->env_pgdir, page,
+												(void *)receiver->env_ipc_dstva, perm))) {
+			return -E_NO_MEM;
+		}
+		receiver->env_ipc_perm = perm;
+	}
+	receiver->env_ipc_recving = 0;
+	receiver->env_ipc_from = curenv->env_id;
+	receiver->env_ipc_value = value;
+	receiver->env_status = ENV_RUNNABLE;
+	receiver->env_tf.tf_regs.reg_eax = 0;
+	return 0;
+	// panic("sys_ipc_try_send not implemented");
 }
 
 // Block until a value is ready.  Record that you want to receive
@@ -352,7 +385,15 @@ static int
 sys_ipc_recv(void *dstva)
 {
 	// LAB 4: Your code here.
-	panic("sys_ipc_recv not implemented");
+	if (dstva < (void *)UTOP && ((uint32_t)dstva & (PGSIZE - 1))) {
+		return -E_INVAL;
+	}
+	curenv->env_ipc_from =  0;
+	curenv->env_ipc_recving = 1;
+	curenv->env_ipc_dstva = dstva;
+	curenv->env_status = ENV_NOT_RUNNABLE;
+	sched_yield();
+	// panic("sys_ipc_recv not implemented");
 	return 0;
 }
 
@@ -438,6 +479,10 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 		case SYS_env_set_pgfault_upcall:
 			// cprintf("SYS_env_set_pgfault_upcall\n");
 			return sys_env_set_pgfault_upcall((envid_t)a1, (void *)a2);
+		case SYS_ipc_recv:
+			return sys_ipc_recv((void *)a1);
+		case SYS_ipc_try_send:
+			return sys_ipc_try_send((envid_t)a1, a2, (void *)a3, (int)a4);
 		default:
 			return -E_INVAL;
 	}
@@ -448,10 +493,11 @@ void
 syscall_helper(struct Trapframe *tf)
 {
 	lock_kernel();
+	tf->tf_eflags |= FL_IF;	//Enable interrupts while in user mode.
 	curenv->env_tf = *tf;
-	curenv->env_tf.tf_regs.reg_eax = syscall(tf->tf_regs.reg_eax, tf->tf_regs.reg_edx,
-				tf->tf_regs.reg_ecx, tf->tf_regs.reg_ebx, tf->tf_regs.reg_edi, 0);
-	curenv->env_tf.tf_eflags |= FL_IF;
+	curenv->env_tf.tf_regs.reg_eax = syscall(tf->tf_regs.reg_eax,
+				tf->tf_regs.reg_edx,tf->tf_regs.reg_ecx, tf->tf_regs.reg_ebx,
+				tf->tf_regs.reg_edi, 0);
 	unlock_kernel();
 	env_pop_tf(&curenv->env_tf);
 }

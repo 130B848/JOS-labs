@@ -97,8 +97,8 @@ sysenter_handler:
    pushfl
    pushl $GD_UT | 3
    pushl %esi
-   pushl $0
- 	 pushl $0
+   pushl $0    # padding tf_trapno or tf_errcode
+ 	 pushl $0    # padding tf_trapno or tf_errcode
 
    pushw $0    # uint16_t tf_padding2
    pushw %ds
