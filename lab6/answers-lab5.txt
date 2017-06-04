@@ -1,0 +1,5 @@
+1. How long approximately did it take you to do this lab?
+Compulsory part: about one afternoon.
+Challenge: about one day.
+
+2. Yes, but the test methods for challenges could be better.
